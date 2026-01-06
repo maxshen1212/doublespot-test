@@ -1,0 +1,27 @@
+{
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/__tests__"],
+  "compilerOptions": {
+    /* 1. Project Structure */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* 2. Runtime Environment (Node.js) */
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+
+    /* 3. Strictness & Safety */
+    "strict": true,
+    "forceConsistentCasingInFileNames": true /* Prevents Linux crashes */,
+
+    /* 4. Interop & Compatibility */
+    "esModuleInterop": true /* Allows 'import express from "express"' */,
+    "skipLibCheck": true /* Speeds up compilation */,
+
+    /* 5. Modern Tooling */
+    "isolatedModules": true /* Optimized for 'tsx' and 'esbuild' */,
+    "moduleDetection": "force" /* Treats every file as a module */
+  }
+}

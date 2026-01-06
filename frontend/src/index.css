@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Optional: Define theme variables here directly in CSS */
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+/* Reset basics */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background-color: #f9fafb; /* gray-50 */
+}
