@@ -1,9 +1,41 @@
+# ===========================
+# GLOBAL PATTERNS (Apply everywhere)
+# ===========================
+# Dependencies
 node_modules/
-**/node_modules/
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Security (Critical)
 .env
 .env.*
 !.env.example
-*.tmp
-*.temp
-**/tmp/
-.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# ===========================
+# BACKEND SPECIFIC
+# ===========================
+# Compiled TypeScript output
+backend/dist/
+backend/build/
+backend/coverage/
+
+# ===========================
+# FRONTEND SPECIFIC
+# ===========================
+# Vite build output
+frontend/dist/
+frontend/dist-ssr/
+frontend/coverage/
+frontend/*.local

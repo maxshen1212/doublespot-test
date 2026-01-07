@@ -1,0 +1,1 @@
+# Vanilla full-stack project for Doublespot Co.

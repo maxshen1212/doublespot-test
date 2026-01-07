@@ -1,5 +1,12 @@
-import express, { Application, Request, Response } from "express";
+import express, {
+  Application,
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import cors from "cors";
+import { prisma } from "./config/prisma";
+import userRouter from "./routes/user";
 
 const app: Application = express();
 
@@ -12,12 +19,20 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ status: "active", message: "Backend is running" });
 });
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "success",
-    message: "Backend is connected!",
-    timestamp: new Date().toISOString(),
-  });
+app.get("/api/health", async (req: Request, res: Response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true, message: "Prisma is connected to MySQL" });
+  } catch (err) {
+    console.error("Prisma health check failed", err);
+    res.status(500).json({ ok: false, message: "Prisma connection failed" });
+  }
+});
+
+app.use("/api/users", userRouter);
+
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: "Not found" });
 });
 
 export default app;
