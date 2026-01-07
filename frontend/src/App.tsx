@@ -65,8 +65,7 @@ function App() {
                 {data.message}
               </h2>
               <p className="text-sm text-gray-400 mt-1 font-mono">
-                Server Time: here I just ignore it rn /
-                {new Date(data.timestamp).toLocaleTimeString()}
+                Server Time: {new Date(data.timestamp).toLocaleTimeString()}
               </p>
             </div>
 
