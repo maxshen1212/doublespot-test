@@ -17,7 +17,7 @@ app.get("/", (req: Request, res: Response) => {
 app.get("/api/health", async (req: Request, res: Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true, message: "Prisma is connected to MySQL" });
+    res.json({ ok: true, message: "Prisma is connected to MySQL!" });
   } catch (err) {
     console.error("Prisma health check failed", err);
     res.status(500).json({ ok: false, message: "Prisma connection failed" });
