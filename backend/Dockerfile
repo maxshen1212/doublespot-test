@@ -1,5 +1,5 @@
 # Use specific node version (matches your engines config)
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Set working directory
 WORKDIR /app

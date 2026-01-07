@@ -6,11 +6,11 @@ Start fresh. This command installs the core framework (Express 5) and the modern
 # 1. Initialize project
 npm init -y
 
-# 2. Install production dependencies (Express 5 + Dotenv + CORS + MySQL2)
-npm install express@5 dotenv cors mysql2
+# 2. Install production dependencies (Express 5 + Dotenv + CORS + Prisma)
+npm install express@5 dotenv cors @prisma/client
 
-# 3. Install development dependencies (TypeScript + Types + TSX)
-npm install -D typescript tsx @types/node @types/express @types/cors
+# 3. Install development dependencies (TypeScript + Types + TSX + Prisma CLI)
+npm install -D typescript tsx @types/node @types/express @types/cors prisma
 ```
 
 # Step 2: TypeScript Configuration (tsconfig.json)
@@ -56,7 +56,10 @@ Open your package.json and replace the scripts section. We use tsx watch for the
   "test": "echo \"Error: no test specified\" && exit 1",
   "dev": "tsx watch src/server.ts",
   "build": "tsc",
-  "start": "node dist/server.js"
+  "start": "node dist/server.js",
+  "db:generate": "prisma generate",
+  "db:push": "prisma db push",
+  "db:studio": "prisma studio"
 }
 ```
 
@@ -111,7 +114,7 @@ This starts the application.
 ```typescript
 import dotenv from "dotenv";
 import app from "./app";
-import pool from "./config/database";
+import prisma from "./config/database";
 
 dotenv.config();
 
@@ -120,17 +123,22 @@ const PORT = process.env.PORT || 3000;
 // Test database connection
 async function testDatabaseConnection() {
   try {
-    const connection = await pool.getConnection();
-    console.log("MySQL database connection successful");
-    connection.release();
+    await prisma.$connect();
+    console.log("Prisma database connection successful");
   } catch (error) {
-    console.error("MySQL database connection failed:", error);
+    console.error("Prisma database connection failed:", error);
   }
 }
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await testDatabaseConnection();
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
 ```
 
@@ -146,34 +154,64 @@ Start the dev server:
 npm run dev
 ```
 
-# Step 7: Database Setup (MySQL2)
+# Step 7: Database Setup (Prisma)
 
-Configure MySQL database connection using a connection pool for better performance and connection management.
+Configure Prisma ORM for type-safe database access with auto-generated queries.
 
-## A. Create src/config/database.ts
+## A. Initialize Prisma
 
-Create a database configuration file that sets up a MySQL connection pool.
+Run this command to create the Prisma configuration:
 
-```typescript
-import mysql from "mysql2/promise";
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "database",
-  port: parseInt(process.env.DB_PORT || "3306"),
-  user: process.env.DB_USER || "user",
-  password: process.env.DB_PASSWORD || "password",
-  database: process.env.DB_NAME || "my_app_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
-
-export default pool;
+```bash
+npx prisma init
 ```
 
-## B. Update src/server.ts
+This creates `prisma/schema.prisma` and adds `DATABASE_URL` to your `.env` file.
 
-The server.ts file has already been updated in Step 5 to include database connection testing. The database pool is imported and tested when the server starts.
+## B. Create src/config/database.ts
+
+Create a database configuration file that exports the Prisma client instance.
+
+```typescript
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default prisma;
+```
+
+## C. Update prisma/schema.prisma
+
+Configure your database provider and define your data models:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Example model - replace with your schema
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+## D. Generate Prisma Client & Push Schema
+
+After defining your schema, run:
+
+```bash
+npm run db:push        # Push schema to database
+npm run db:generate    # Generate Prisma Client
+```
 
 # Step 8: Environment Variables Configuration
 
@@ -186,35 +224,24 @@ Create a template file that documents all required environment variables.
 ```env
 PORT=3000
 
-# Database Connection Info
-DB_HOST=database
-DB_PORT=3306
-DB_USER=user
-DB_PASSWORD=password
-DB_NAME=my_app_db
-
-# If you use Prisma or TypeORM, the connection string looks like this:
-# DATABASE_URL="mysql://user:password@database:3306/my_app_db"
+# Prisma Database Connection
+DATABASE_URL="mysql://user:password@database:3306/my_app_db"
 ```
 
 ## B. Create .env
 
 Copy `.env.example` to `.env` and update the values according to your environment:
 
-- **Local development**: Set `DB_HOST=localhost` (or `127.0.0.1`)
-- **Docker environment**: Set `DB_HOST=database` (matches the Docker service name)
+- **Local development**: `DATABASE_URL="mysql://user:password@localhost:3306/my_app_db"`
+- **Docker environment**: `DATABASE_URL="mysql://user:password@database:3306/my_app_db"`
 
 For local development, your `.env` file should look like:
 
 ```env
 PORT=3000
 
-# Database Connection Info (Local)
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=user
-DB_PASSWORD=password
-DB_NAME=my_app_db
+# Prisma Database Connection (Local)
+DATABASE_URL="mysql://user:password@localhost:3306/my_app_db"
 ```
 
 **Note**: Make sure to add `.env` to your `.gitignore` file to prevent committing sensitive information.

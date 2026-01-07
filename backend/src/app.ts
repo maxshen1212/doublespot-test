@@ -1,9 +1,4 @@
-import express, {
-  Application,
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { prisma } from "./config/prisma";
 import userRouter from "./routes/user";
@@ -31,8 +26,17 @@ app.get("/api/health", async (req: Request, res: Response) => {
 
 app.use("/api/users", userRouter);
 
+// 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "Not found" });
+});
+
+// Error handler - must be last
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+  console.error("Error:", err);
+  res.status(500).json({
+    message: err.message || "Internal server error",
+  });
 });
 
 export default app;

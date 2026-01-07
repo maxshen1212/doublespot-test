@@ -12,4 +12,11 @@ const adapter = new PrismaMariaDb({
 
 const prisma = new PrismaClient({ adapter });
 
+const requiredEnvs = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+requiredEnvs.forEach(env => {
+  if (!process.env[env]) {
+    console.warn(`${env} not set, using default`);
+  }
+});
+
 export { prisma };

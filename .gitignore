@@ -23,6 +23,11 @@ yarn-error.log*
 logs/
 *.log
 
+# Temporary files
+*.tmp
+*.temp
+**/tmp/
+
 # ===========================
 # BACKEND SPECIFIC
 # ===========================
