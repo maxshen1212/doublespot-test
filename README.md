@@ -1,158 +1,130 @@
-# Vanilla full-stack project for Doublespot Co.
+# Doublespot Full-Stack Project
 
-This repository contains a full-stack web application with a React frontend and a Node.js (Express) backend. It is set up for both local development and a containerized environment using Docker.
+Full-stack web application with React frontend and Node.js backend, supporting both local and Docker development.
 
-## Tech Stack
+---
 
-### Backend
+## 🛠️ Tech Stack
 
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **ORM**: Prisma
-- **Database**: MySQL
-- **Runtime**: Node.js
-- **Dev Tools**: `tsx` for hot-reloading
+**Backend**: Express.js • TypeScript • Prisma • MySQL • tsx
+**Frontend**: React • TypeScript • Vite • Tailwind CSS v4 • Zustand • TanStack Query • React Router
+**DevOps**: Docker • Docker Compose
 
-### Frontend
+---
 
-- **Framework**: React
-- **Language**: TypeScript
-- **Build Tool**: Vite with SWC
-- **Styling**: Tailwind CSS v4
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query (React Query)
-- **Routing**: React Router DOM
-
-### Tooling & Environment
-
-- **Containerization**: Docker & Docker Compose
-- **Package Manager**: npm
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 .
 ├── docker-compose.yml
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── prisma/
-│   └── src/
-└── frontend/
-    ├── Dockerfile
-    ├── package.json
+├── backend/          # Express API
+│   ├── src/
+│   └── prisma/
+└── frontend/         # React SPA
     └── src/
 ```
 
-## Getting Started
+---
 
-You can run this project either locally on your machine or using Docker.
+## 🚀 Quick Start
 
-### 1. Local Development Setup
+### Prerequisites
 
-#### Prerequisites
+- **Local**: Node.js 20+, npm, MySQL
+- **Docker**: Docker Desktop
 
-- Node.js (v20 or later recommended)
-- npm
-- A running MySQL instance
+### Option 1: Local Development
 
-#### Backend Setup
+```bash
+# Backend
+cd backend
+npm install
+cp .env.example .env          # Edit DB_HOST=localhost
+npx prisma migrate dev
+npm run dev                   # http://localhost:3000
 
-1.  Navigate to the `backend` directory:
-    ```bash
-    cd backend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Set up your environment variables by copying the example file:
-    ```bash
-    cp .env.example .env
-    ```
-4.  Update `.env` with your local database credentials. Set `DB_HOST=localhost`.
-5.  Apply database migrations:
-    ```bash
-    npx prisma migrate dev
-    ```
-6.  Start the development server:
-    `bash
-    npm run dev
-    `
-    The backend will be running on `http://localhost:3000`.
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev                   # http://localhost:5173
+```
 
-#### Frontend Setup
+### Option 2: Docker (Recommended)
 
-1.  Navigate to the `frontend` directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Start the development server:
-    `bash
-    npm run dev
-    `
-    The frontend will be running on `http://localhost:5173`. It is configured to proxy API requests to the backend.
+```bash
+cp backend/.env.example backend/.env  # Edit DB_HOST=database
+docker compose up --build             # Add -d for background
 
-### 2. Docker Setup
+# Access:
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:3000
+# Database: localhost:3306
 
-#### Prerequisites
+# Stop
+docker compose down           # Add -v to remove volumes
+```
 
-- Docker Desktop (or Docker Engine + Docker Compose)
+---
 
-#### Instructions
+## 📜 Available Scripts
 
-1.  **Environment File**: Make sure you have a `.env` file inside the `backend` directory. You can copy it from the example:
+### Backend
 
-    ```bash
-    cp backend/.env.example backend/.env
-    ```
+```bash
+npm run dev          # Development with hot-reload
+npm run build        # Compile TypeScript
+npm start            # Run production build
+npx prisma migrate dev    # Apply migrations
+npx prisma studio    # Open Prisma Studio
+```
 
-    **Important**: Ensure `DB_HOST` is set to `database` in `backend/.env` for the container network.
+### Frontend
 
-2.  **Build and Start**: From the root directory, run:
+```bash
+npm run dev          # Development server
+npm run build        # Production build
+npm run lint         # Lint code
+npm run preview      # Preview production build
+```
 
-    ```bash
-    docker compose up --build
-    ```
+---
 
-    To run in the background, use:
+## 🧪 Testing & CI/CD
 
-    ```bash
-    docker compose up --build -d
-    ```
+```bash
+# Backend
+npm test             # Run tests (Vitest)
+npm run lint         # ESLint check
 
-3.  **Access Services**:
+# Frontend
+npm run lint         # ESLint check
+npm run build        # Type check + build
+```
 
-    - **Frontend**: `http://localhost:5173`
-    - **Backend**: `http://localhost:3000`
-    - **Database**: Connect via port `3306`
+**GitHub Actions**: Auto-validates on PR (lint, test, build)
 
-4.  **Stop Services**:
-    ```bash
-    docker compose down
-    ```
-    To remove the database volume as well, add the `-v` flag:
-    ```bash
-    docker compose down -v
-    ```
+---
 
-## Available Scripts
+## 📚 Documentation
 
-### Backend (`backend/`)
+- **Backend Convention**: [documents/backend-dev-convention.md](documents/backend-dev-convention.md)
+- **Setup Guides**: [documents/](documents/)
 
-- `npm run dev`: Starts the development server with hot-reload using `tsx`.
-- `npm run build`: Compiles the TypeScript code to JavaScript.
-- `npm run start`: Starts the application from the compiled code.
-- `npx prisma migrate dev`: Applies database migrations.
-- `npx prisma studio`: Opens the Prisma Studio to view and manage data.
+---
 
-### Frontend (`frontend/`)
+## 🔧 Troubleshooting
 
-- `npm run dev`: Starts the Vite development server.
-- `npm run build`: Builds the application for production.
-- `npm run lint`: Lints the codebase.
-- `npm run preview`: Previews the production build locally.
+**Database Connection Issues**:
+- Local: Use `DB_HOST=localhost`
+- Docker: Use `DB_HOST=database`
+
+**Port Conflicts**:
+- Backend: 3000
+- Frontend: 5173
+- MySQL: 3306
+
+**Prisma Issues**:
+```bash
+npx prisma generate      # Regenerate client
+npx prisma migrate reset # Reset database
+```
