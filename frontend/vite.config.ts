@@ -5,16 +5,17 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(({ mode }) => {
   // Load env variables
   const env = loadEnv(mode, process.cwd(), "");
-  console.log(env.VITE_API_URL);
+  // Use backend:3000 for Docker, localhost:3000 for local dev
+  const apiUrl = env.VITE_API_URL || "http://backend:3000";
+  console.log("API Target:", apiUrl);
+
   return {
     plugins: [react(), tailwindcss()],
     server: {
       host: true, // Needed for Docker
       proxy: {
         "/api": {
-          // If running in Docker, use 'http://backend:3000'
-          // If running locally, use 'http://localhost:3000'
-          target: env.VITE_API_URL || "http://localhost:3000",
+          target: apiUrl,
           changeOrigin: true,
           secure: false,
         },

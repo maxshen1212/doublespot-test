@@ -7,7 +7,11 @@ WORKDIR /app
 # Copy package files first (better caching)
 COPY package*.json ./
 
-# Install dependencies
+# Copy Prisma schema (needed for postinstall script)
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+
+# Install dependencies (will run prisma generate via postinstall)
 RUN npm install
 
 # Copy the rest of the code

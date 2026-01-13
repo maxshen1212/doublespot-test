@@ -2,11 +2,13 @@ name: Backend PR Check
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "backend/**"
       - ".github/workflows/backend-pr-check.yml"
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -18,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -30,17 +32,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Run linting
         run: npm run lint
 
-      - name: Run tests
-        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests (CI mode)
+        run: npm run test:run
 
       - name: Build TypeScript
         run: npm run build
 
+      # Recommended when using --platform; avoids environment-specific Docker behavior.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image (validation only)
-        run: docker build --platform linux/amd64 -t backend-test .
+        run: docker buildx build --platform linux/amd64 -t backend-test --load .

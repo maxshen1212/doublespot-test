@@ -1,39 +1,43 @@
-**Stack:** Vite + React (SWC) + TypeScript + Tailwind CSS v4 + TanStack Query + Zustand
+# Frontend 專案初始化指南（Docker 環境）
 
-# 1. Project Scaffolding
+**技術棧**：Vite + React 19 + TypeScript + Tailwind CSS v4 + TanStack Query + Zustand
 
-Run these commands in your project root (alongside the `backend` folder).
+本文檔記錄如何建立 Frontend 專案，確保與 Backend 的 API 整合。
+
+---
+
+## Step 1: 建立專案
+
+在專案根目錄執行（與 `backend/` 同層）：
 
 ```bash
-# 1. Create project with SWC (Rust-based compiler)
+# 使用 Vite 建立 React + TypeScript 專案（使用 SWC 編譯器）
 npm create vite@latest frontend -- --template react-swc-ts
 
-# 2. Enter directory
+# 進入目錄
 cd frontend
 
-# 3. Install core dependencies
+# 安裝基礎依賴
 npm install
-
 ```
 
-# 2. Install Modern Stack
+---
 
-Install the v4 styling engine and standard logic libraries.
+## Step 2: 安裝依賴套件
 
 ```bash
-# Logic Libraries (Router, Data Fetching, State, Utilities)
+# 核心套件
 npm install react-router-dom @tanstack/react-query axios zustand clsx tailwind-merge
 
-# Styling Engine (Tailwind v4 + Vite Plugin)
+# Tailwind CSS v4
 npm install tailwindcss @tailwindcss/vite
-
 ```
 
-# 3. Configuration
+---
 
-## A. Vite Config (`vite.config.ts`)
+## Step 3: 設定檔配置
 
-Configures the Tailwind v4 plugin and the Proxy to the Express backend with environment variable support for Docker compatibility.
+### A. vite.config.ts
 
 ```typescript
 import { defineConfig, loadEnv } from "vite";
@@ -41,21 +45,17 @@ import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
-  // Load env variables
   const env = loadEnv(mode, process.cwd(), "");
+  const apiUrl = env.VITE_API_URL || "http://backend:3000";
+  console.log("API Target:", apiUrl);
 
   return {
-    plugins: [
-      react(),
-      tailwindcss(), // 1. Activates Tailwind v4
-    ],
+    plugins: [react(), tailwindcss()],
     server: {
-      host: true, // Needed for Docker
+      host: true, // Docker 需要
       proxy: {
         "/api": {
-          // If running in Docker, use 'http://backend:3000'
-          // If running locally, use 'http://localhost:3000'
-          target: env.VITE_API_URL || "http://localhost:3000",
+          target: apiUrl,
           changeOrigin: true,
           secure: false,
         },
@@ -65,157 +65,177 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-**Environment Variable Support:**
-- The `VITE_API_URL` environment variable allows you to configure the backend URL
-- When running locally, defaults to `http://localhost:3000`
-- When running in Docker, set `VITE_API_URL=http://backend:3000` in your environment
-- The `host: true` option is required for Docker to expose Vite to the network
+**關鍵配置**：
+- `host: true` - 讓 Docker 可以訪問
+- `proxy` - 代理 `/api` 請求到 backend
+- `VITE_API_URL` - 環境變數支援（Docker 中使用 `http://backend:3000`）
 
-## B. Global CSS (`src/index.css`)
+### B. src/index.css
 
-Replace the entire file content with the Tailwind v4 import.
+替換整個檔案內容：
 
 ```css
 @import "tailwindcss";
 
-/* Optional: Define theme variables here directly in CSS */
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
-/* Reset basics */
 html,
 body {
   height: 100%;
   margin: 0;
-  background-color: #f9fafb; /* gray-50 */
+  background-color: #f9fafb;
 }
 ```
 
-# 4. Architecture
+---
 
-Create the folder structure.
+## Step 4: 建立資料夾結構
 
 ```bash
 mkdir -p src/components/ui src/pages src/hooks src/services src/store src/layouts src/types
 ```
 
-# 5. Application Entry (`src/main.tsx`)
+**結構說明**：
 
-Setup `QueryClientProvider` and `BrowserRouter`.
-
-```tsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App.tsx";
-import "./index.css";
-
-const queryClient = new QueryClient();
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+```
+src/
+  ├── components/ui/      # UI 元件（按鈕、輸入框等）
+  ├── pages/              # 頁面元件
+  ├── hooks/              # 自訂 Hooks（TanStack Query）
+  ├── services/           # API 服務（axios）
+  ├── store/              # 全域狀態（Zustand）
+  ├── layouts/            # 佈局元件
+  └── types/              # TypeScript 型別定義
 ```
 
-# 6. Smoke Test Component (`src/App.tsx`)
+---
 
-A clean landing page to verify Tailwind and State are working.
+## Step 5: 建立 Dockerfile
 
-```tsx
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+建立 `frontend/Dockerfile`：
 
-// 1. Define the shape of the data we expect from the backend
-interface HealthResponse {
-  status: string;
-  message: string;
-  timestamp: string;
-}
+```dockerfile
+FROM node:22-alpine
 
-function App() {
-  // 2. Use the hook to fetch data
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["health"], // Unique key for caching
-    queryFn: async () => {
-      // The proxy in vite.config.ts redirects '/api' -> 'http://localhost:3000/api'
-      const { data } = await axios.get<HealthResponse>("/api/health");
-      return data;
-    },
-    retry: 1, // Only retry once if it fails
-  });
+WORKDIR /app
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl border border-gray-100 text-center transition-all hover:shadow-2xl">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-6 tracking-tight">
-          System Status
-        </h1>
+COPY package*.json ./
+RUN npm install
 
-        {/* STATE: LOADING */}
-        {isLoading && (
-          <div className="flex flex-col items-center space-y-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-            <p className="text-gray-500 animate-pulse">
-              Connecting to backend...
-            </p>
-          </div>
-        )}
+COPY . .
+EXPOSE 5173
 
-        {/* STATE: ERROR */}
-        {isError && (
-          <div className="rounded-lg bg-red-50 p-4 border border-red-100">
-            <div className="text-red-500 text-5xl mb-2">❌</div>
-            <h3 className="text-lg font-bold text-red-700">
-              Connection Failed
-            </h3>
-            <p className="text-sm text-red-600 mt-1">
-              {error instanceof Error ? error.message : "Unknown error"}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Check if the backend is running on port 3000.
-            </p>
-          </div>
-        )}
-
-        {/* STATE: SUCCESS */}
-        {data && (
-          <div className="space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <span className="text-3xl">✅</span>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-green-700">
-                {data.message}
-              </h2>
-              <p className="text-sm text-gray-400 mt-1 font-mono">
-                Server Time: {new Date(data.timestamp).toLocaleTimeString()}
-              </p>
-            </div>
-
-            <div className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-              Status: {data.status}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default App;
+# ⚠️ 必須加 --host 讓 Docker 可以訪問
+CMD ["npm", "run", "dev", "--", "--host"]
 ```
 
-# 7. Start Development
+---
+
+## Step 6: 啟動開發
+
+### Docker 環境（推薦）
 
 ```bash
+# 在專案根目錄
+docker compose up
+```
+
+### 本機開發（可選）
+
+```bash
+cd frontend
 npm run dev
 ```
+
+訪問 [http://localhost:5173](http://localhost:5173)
+
+---
+
+## API 整合範例
+
+### 建立型別 (types/space.ts)
+
+```typescript
+export interface Space {
+  id: string;
+  name: string;
+  capacity: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateSpaceInput {
+  name: string;
+  capacity: number;
+}
+```
+
+### 建立 API 服務 (services/space.service.ts)
+
+```typescript
+import axios from "axios";
+import { Space, CreateSpaceInput } from "../types/space";
+
+const api = axios.create({
+  baseURL: "/api", // 會被 Vite proxy 轉發到 backend
+});
+
+export const spaceService = {
+  fetchSpaces: async (): Promise<Space[]> => {
+    const { data } = await api.get<Space[]>("/spaces");
+    return data;
+  },
+
+  createSpace: async (input: CreateSpaceInput): Promise<Space> => {
+    const { data } = await api.post<Space>("/spaces", input);
+    return data;
+  },
+};
+```
+
+### 建立 Hook (hooks/useSpaces.ts)
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { spaceService } from "../services/space.service";
+
+export function useSpaces() {
+  return useQuery({
+    queryKey: ["spaces"],
+    queryFn: spaceService.fetchSpaces,
+  });
+}
+
+export function useCreateSpace() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: spaceService.createSpace,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["spaces"] });
+    },
+  });
+}
+```
+
+---
+
+## 完成檢查清單
+
+✅ Vite 專案已建立
+✅ 依賴套件已安裝
+✅ `vite.config.ts` 已配置（proxy + Docker）
+✅ `index.css` 已設定 Tailwind v4
+✅ 資料夾結構已建立
+✅ `Dockerfile` 已建立（包含 `--host`）
+✅ API 整合範例已了解
+
+---
+
+## 下一步
+
+- 參考 `src/pages/SpacesPage.tsx` 完整 CRUD 範例
+- 了解 TanStack Query 的 cache invalidation
+- 學習 Zustand 全域狀態管理

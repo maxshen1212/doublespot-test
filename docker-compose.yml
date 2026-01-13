@@ -1,23 +1,26 @@
 services:
   database:
-    image: mysql:8.0
+    image: mysql:8.4
     container_name: mysql_dev
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-my_app_db}
-      MYSQL_USER: ${MYSQL_USER:-user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
+      MYSQL_DATABASE: ${DATABASE_NAME:-my_app_db}
+      MYSQL_USER: ${DATABASE_USER:-user}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-password}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    env_file:
+      - ./backend/.env
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+
   backend:
     build: ./backend
     container_name: backend_dev
@@ -33,6 +36,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
+
   frontend:
     build: ./frontend
     container_name: frontend_dev
@@ -41,10 +45,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    # We pass the backend URL as an environment variable
     environment:
       - VITE_API_URL=http://backend:3000
     depends_on:
       - backend
+
 volumes:
   mysql_data:

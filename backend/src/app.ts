@@ -1,7 +1,6 @@
-import express, { Application, NextFunction, Request, Response } from "express";
+import express, { Application, Request, Response } from "express";
 import cors from "cors";
-import { prisma } from "./config/prisma";
-import userRouter from "./routes/user";
+import { spaceRouter } from "./features/space/routes.js";
 
 const app: Application = express();
 
@@ -9,34 +8,15 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 
-// Base Route
-app.get("/", (req: Request, res: Response) => {
-  res.json({ status: "active", message: "Backend is running" });
-});
-
-app.get("/api/health", async (req: Request, res: Response) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true, message: "Prisma is connected to MySQL" });
-  } catch (err) {
-    console.error("Prisma health check failed", err);
-    res.status(500).json({ ok: false, message: "Prisma connection failed" });
-  }
-});
-
-app.use("/api/users", userRouter);
-
-// 404 handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ message: "Not found" });
-});
-
-// Error handler - must be last
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  console.error("Error:", err);
-  res.status(500).json({
-    message: err.message || "Internal server error",
+// Health Check Route (for frontend proxy)
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({
+    status: "active",
+    message: "Backend is running",
+    timestamp: new Date().toISOString(),
   });
 });
+
+app.use("/api/spaces", spaceRouter);
 
 export default app;

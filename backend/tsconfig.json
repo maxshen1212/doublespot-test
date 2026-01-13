@@ -7,9 +7,11 @@
     "outDir": "./dist",
 
     /* 2. Runtime Environment (Node.js) */
-    "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
     "resolveJsonModule": true,
 
     /* 3. Strict Mode & Safety */
