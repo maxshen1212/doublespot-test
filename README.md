@@ -64,6 +64,12 @@ docker compose up --build
 
 # 3. 執行資料庫 Migration（另開終端）
 docker compose exec backend npm run db:migrate
+
+# 4. 產生 prisma 客戶端
+docker compose exec backend npm run db:generate
+
+# 5. 重啟 backend 服務以載入新的 Prisma Client
+docker compose restart backend
 ```
 
 ### 存取服務
@@ -205,8 +211,12 @@ docker compose down -v
 # 2. 重新建置並啟動
 docker compose up --build
 
-# 3. 執行 migration
+# 3. 執行 migration 和 generate（另開終端）
 docker compose exec backend npm run db:migrate
+docker compose exec backend npm run db:generate
+
+# 4. 重啟 backend
+docker compose restart backend
 ```
 
 ### Port 被占用
